@@ -11,6 +11,25 @@ background access.
 Requires Go **1.26+** and Fiber **v3.6.1+**. The module is
 `go.z2n.io/fiber/sessionmanager`; the package name is `sessionmanager`.
 
+## Why you may need this middleware
+
+Consider an OpenID Connect (OIDC) backend-for-frontend (BFF). During sign-in, the
+application needs two sessions with different purposes and lifetimes:
+
+- A **login-flow session** that temporarily stores metadata during authentication.
+- An **application session** that keeps the user signed in across subsequent requests.
+
+The `/auth/callback` handler connects these two lifecycles. After successfully validating
+the callback, it needs to remove the temporary login-flow session and establish
+the application session in the same request. Each session needs its own identifier
+and expiration policy.
+
+SessionManager supports this workflow through independent, named sessions. A handler
+can access `login` and `app` separately, destroy one, and save the other, with each
+namespace configured independently.
+
+Use it when a single request needs to manage sessions with distinct lifecycles.
+
 ## Install
 
 ```sh
