@@ -1,0 +1,6 @@
+/.local/
+/.vscode/
+/.codex/
+/bin/
+/coverage.out
+*.test

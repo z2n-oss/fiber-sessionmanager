@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.26.x", "1.27.x"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: go.sum
+      - run: go test ./...
+      - run: go vet ./...
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: "1.27.x"
+          cache-dependency-path: go.sum
+      - name: Formatting
+        run: test -z "$(gofmt -l .)"
+      - run: go mod tidy -diff
+      - run: go mod verify
+      - run: go test -race -cover ./...
+      - run: go test -run '^$' -fuzz '^FuzzDecodeRecord$' -fuzztime=10s -parallel=2
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
